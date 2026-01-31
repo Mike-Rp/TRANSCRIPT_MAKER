@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">Notes</h1>
+                <div class="header-actions">
+                    <button id="copy-btn" class="icon-button" title="Copy all text">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M16 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                            <polyline points="16 4 16 2 8 2 8 4"/>
+                        </svg>
+                    </button>
+                    <button id="theme-toggle" class="icon-button" title="Toggle dark mode">
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <aside class="toolbar">
+                <div class="toolbar-section">
+                    <h2 class="toolbar-title">Format</h2>
+                    <div class="buttons-container" id="labels-container">
+                        <button class="label-button active" data-label="Interviewer">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <span>Interviewer</span>
+                        </button>
+                        <button class="label-button" data-label="Librarian">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            <span>Librarian</span>
+                        </button>
+                        <button class="label-button" data-label="Question">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v.01"/>
+                                <path d="M12 12a1 1 0 0 0-1-1 2 2 0 0 0-2 2c0 1.11.89 2 2 2h1v3"/>
+                            </svg>
+                            <span>Question</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toolbar-section">
+                    <h2 class="toolbar-title">Custom</h2>
+                    <div class="custom-label-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="custom-label-input" 
+                            class="custom-label-input" 
+                            placeholder="Label name"
+                            maxlength="30"
+                        >
+                        <button id="add-label-btn" class="icon-button secondary" title="Add label">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="custom-buttons-container" id="custom-labels-container"></div>
+                </div>
+
+                <div class="toolbar-section">
+                    <h2 class="toolbar-title">Actions</h2>
+                    <button id="undo-btn" class="action-button" disabled>
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M3 7v6h6"/>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                        </svg>
+                        <span>Undo</span>
+                    </button>
+                    <button id="clear-btn" class="action-button danger">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                        <span>Clear All</span>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="editor-container">
+                <div class="editor-wrapper">
+                    <div class="pages-container" id="pages-container">
+                        <div class="page">
+                            <div id="editor" class="editor" contenteditable="true" spellcheck="true"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title" class="modal-title"></h2>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message" class="modal-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="button secondary">Cancel</button>
+                <button id="modal-confirm" class="button danger">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <p id="toast-message" class="toast-message"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
