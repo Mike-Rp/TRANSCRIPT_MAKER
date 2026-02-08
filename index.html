@@ -49,14 +49,9 @@
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
                             <span>Interviewer</span>
+                            <span class="keybind-badge" data-label="Interviewer"></span>
                         </button>
-                        <button class="label-button" data-label="Librarian">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                            </svg>
-                            <span>Librarian</span>
-                        </button>
+
                         <button class="label-button" data-label="Question">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <circle cx="12" cy="12" r="10"/>
@@ -64,6 +59,7 @@
                                 <path d="M12 12a1 1 0 0 0-1-1 2 2 0 0 0-2 2c0 1.11.89 2 2 2h1v3"/>
                             </svg>
                             <span>Question</span>
+                            <span class="keybind-badge" data-label="Question"></span>
                         </button>
                     </div>
                 </div>
@@ -133,6 +129,26 @@
             <div class="modal-footer">
                 <button id="modal-cancel" class="button secondary">Cancel</button>
                 <button id="modal-confirm" class="button danger">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="keybind-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Set Keybind</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-message" id="keybind-label-name"></p>
+                <p class="keybind-instruction">Press any key to set as shortcut...</p>
+                <div class="keybind-display" id="keybind-display">-</div>
+                <p class="keybind-hint">Tip: Use Ctrl+Number for quick access</p>
+            </div>
+            <div class="modal-footer">
+                <button id="keybind-clear" class="button secondary">Clear Keybind</button>
+                <button id="keybind-cancel" class="button secondary">Cancel</button>
+                <button id="keybind-save" class="button" disabled>Save</button>
             </div>
         </div>
     </div>

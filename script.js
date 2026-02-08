@@ -17,12 +17,25 @@ class NotesApp {
         this.toast = document.getElementById('toast');
         this.toastMessage = document.getElementById('toast-message');
         
+        // Keybind modal elements
+        this.keybindModal = document.getElementById('keybind-modal');
+        this.keybindLabelName = document.getElementById('keybind-label-name');
+        this.keybindDisplay = document.getElementById('keybind-display');
+        this.keybindCancel = document.getElementById('keybind-cancel');
+        this.keybindSave = document.getElementById('keybind-save');
+        this.keybindClear = document.getElementById('keybind-clear');
+        
         this.currentLabel = 'Interviewer';
         this.history = [];
         this.historyIndex = -1;
-        this.defaultLabels = ['Interviewer', 'Librarian', 'Question'];
+        this.defaultLabels = ['Interviewer', 'Question'];
         this.customLabels = [];
         this.maxPageHeight = 9;
+        
+        // Keybind management
+        this.keybinds = {}; // {labelName: {key: 'a', ctrl: true, alt: false, shift: false}}
+        this.currentKeybindLabel = null;
+        this.tempKeybind = null;
         
         this.init();
     }
@@ -30,7 +43,10 @@ class NotesApp {
     init() {
         this.loadTheme();
         this.loadCustomLabels();
+        this.loadKeybinds();
         this.setupEventListeners();
+        this.setupGlobalKeybindListener();
+        this.updateAllKeybindBadges();
         this.saveState();
     }
 
@@ -49,15 +65,71 @@ class NotesApp {
         this.modalOverlay.addEventListener('click', () => this.closeModal());
         this.modalConfirm.addEventListener('click', () => this.confirmClear());
         
+        // Keybind modal events
+        this.keybindCancel.addEventListener('click', () => this.closeKeybindModal());
+        this.keybindSave.addEventListener('click', () => this.saveKeybind());
+        this.keybindClear.addEventListener('click', () => this.clearKeybind());
+        
         this.editor.addEventListener('keydown', (e) => this.handleEditorKeydown(e));
         this.editor.addEventListener('input', (e) => this.handleEditorInput(e));
         
         this.attachDefaultLabelButtons();
     }
 
+    setupGlobalKeybindListener() {
+        document.addEventListener('keydown', (e) => {
+            // Don't trigger if user is typing in an input or the editor
+            if (e.target.tagName === 'INPUT' || e.target === this.editor) {
+                return;
+            }
+            
+            // Don't trigger if a modal is open
+            if (!this.modal.classList.contains('hidden') || !this.keybindModal.classList.contains('hidden')) {
+                return;
+            }
+            
+            // Check if this key combination matches any keybind
+            for (const [labelName, binding] of Object.entries(this.keybinds)) {
+                if (this.matchesKeybind(e, binding)) {
+                    e.preventDefault();
+                    this.switchToLabel(labelName);
+                    return;
+                }
+            }
+        });
+    }
+
+    matchesKeybind(event, binding) {
+        return event.key.toLowerCase() === binding.key.toLowerCase() &&
+               event.ctrlKey === binding.ctrl &&
+               event.altKey === binding.alt &&
+               event.shiftKey === binding.shift;
+    }
+
+    switchToLabel(labelName) {
+        const button = document.querySelector(`[data-label="${labelName}"]`);
+        if (button) {
+            this.selectLabel(button);
+            this.showToast(`Switched to: ${labelName}`);
+        }
+    }
+
     attachDefaultLabelButtons() {
         this.labelsContainer.querySelectorAll('.label-button').forEach(button => {
-            button.addEventListener('click', () => this.selectLabel(button));
+            button.addEventListener('click', (e) => {
+                if (!e.target.closest('.keybind-badge')) {
+                    this.selectLabel(button);
+                }
+            });
+            
+            // Add click handler for keybind badge
+            const badge = button.querySelector('.keybind-badge');
+            if (badge) {
+                badge.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openKeybindModal(button.dataset.label);
+                });
+            }
         });
     }
 
@@ -67,6 +139,125 @@ class NotesApp {
         });
         button.classList.add('active');
         this.currentLabel = button.dataset.label;
+    }
+
+    openKeybindModal(labelName) {
+        this.currentKeybindLabel = labelName;
+        this.tempKeybind = null;
+        this.keybindLabelName.textContent = `Setting keybind for: ${labelName}`;
+        this.keybindDisplay.textContent = '-';
+        this.keybindSave.disabled = true;
+        this.keybindModal.classList.remove('hidden');
+        
+        // Add keydown listener for keybind modal
+        this.keybindModalKeyHandler = (e) => this.handleKeybindInput(e);
+        document.addEventListener('keydown', this.keybindModalKeyHandler);
+    }
+
+    handleKeybindInput(e) {
+        // Ignore modifier keys alone
+        if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+            return;
+        }
+        
+        e.preventDefault();
+        
+        this.tempKeybind = {
+            key: e.key,
+            ctrl: e.ctrlKey,
+            alt: e.altKey,
+            shift: e.shiftKey
+        };
+        
+        this.keybindDisplay.textContent = this.formatKeybind(this.tempKeybind);
+        this.keybindSave.disabled = false;
+    }
+
+    formatKeybind(binding) {
+        let parts = [];
+        if (binding.ctrl) parts.push('Ctrl');
+        if (binding.alt) parts.push('Alt');
+        if (binding.shift) parts.push('Shift');
+        parts.push(binding.key.toUpperCase());
+        return parts.join(' + ');
+    }
+
+    saveKeybind() {
+        if (!this.tempKeybind) return;
+        
+        // Check if this keybind is already used
+        for (const [label, binding] of Object.entries(this.keybinds)) {
+            if (label !== this.currentKeybindLabel && 
+                binding.key === this.tempKeybind.key &&
+                binding.ctrl === this.tempKeybind.ctrl &&
+                binding.alt === this.tempKeybind.alt &&
+                binding.shift === this.tempKeybind.shift) {
+                this.showToast(`Keybind already used for: ${label}`);
+                return;
+            }
+        }
+        
+        this.keybinds[this.currentKeybindLabel] = this.tempKeybind;
+        this.saveKeybinds();
+        this.updateKeybindBadge(this.currentKeybindLabel);
+        this.closeKeybindModal();
+        this.showToast(`Keybind set: ${this.formatKeybind(this.tempKeybind)}`);
+    }
+
+    clearKeybind() {
+        if (this.keybinds[this.currentKeybindLabel]) {
+            delete this.keybinds[this.currentKeybindLabel];
+            this.saveKeybinds();
+            this.updateKeybindBadge(this.currentKeybindLabel);
+            this.showToast(`Keybind cleared for: ${this.currentKeybindLabel}`);
+        }
+        this.closeKeybindModal();
+    }
+
+    closeKeybindModal() {
+        this.keybindModal.classList.add('hidden');
+        document.removeEventListener('keydown', this.keybindModalKeyHandler);
+        this.currentKeybindLabel = null;
+        this.tempKeybind = null;
+    }
+
+    updateKeybindBadge(labelName) {
+        const badge = document.querySelector(`.keybind-badge[data-label="${labelName}"]`);
+        if (badge) {
+            const binding = this.keybinds[labelName];
+            if (binding) {
+                badge.textContent = this.formatKeybind(binding);
+                badge.classList.add('has-keybind');
+            } else {
+                badge.textContent = '';
+                badge.classList.remove('has-keybind');
+            }
+        }
+    }
+
+    updateAllKeybindBadges() {
+        document.querySelectorAll('.keybind-badge').forEach(badge => {
+            const labelName = badge.dataset.label;
+            const binding = this.keybinds[labelName];
+            if (binding) {
+                badge.textContent = this.formatKeybind(binding);
+                badge.classList.add('has-keybind');
+            } else {
+                badge.textContent = '';
+                badge.classList.remove('has-keybind');
+            }
+        });
+    }
+
+    saveKeybinds() {
+        localStorage.setItem('notes-keybinds', JSON.stringify(this.keybinds));
+    }
+
+    loadKeybinds() {
+        const saved = localStorage.getItem('notes-keybinds');
+        if (saved) {
+            this.keybinds = JSON.parse(saved);
+        }
     }
 
     handleEditorKeydown(e) {
@@ -209,12 +400,28 @@ class NotesApp {
         const text = document.createElement('span');
         text.textContent = labelName;
         
+        const keybindBadge = document.createElement('span');
+        keybindBadge.className = 'keybind-badge';
+        keybindBadge.dataset.label = labelName;
+        
         button.appendChild(svg);
         button.appendChild(text);
-        button.addEventListener('click', () => this.selectLabel(button));
+        button.appendChild(keybindBadge);
+        
+        button.addEventListener('click', (e) => {
+            if (!e.target.closest('.keybind-badge') && !e.target.closest('.remove-label-btn')) {
+                this.selectLabel(button);
+            }
+        });
+        
+        // Keybind badge click handler
+        keybindBadge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openKeybindModal(labelName);
+        });
         
         const removeBtn = document.createElement('button');
-        removeBtn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:inherit;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;opacity:0.6;';
+        removeBtn.className = 'remove-label-btn';
         removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -224,11 +431,21 @@ class NotesApp {
         button.style.position = 'relative';
         button.appendChild(removeBtn);
         this.customLabelsContainer.appendChild(button);
+        
+        // Update keybind badge if exists
+        this.updateKeybindBadge(labelName);
     }
 
     removeCustomLabel(labelName, buttonElement) {
         this.customLabels = this.customLabels.filter(l => l !== labelName);
         this.saveCustomLabels();
+        
+        // Remove keybind if exists
+        if (this.keybinds[labelName]) {
+            delete this.keybinds[labelName];
+            this.saveKeybinds();
+        }
+        
         buttonElement.remove();
         this.showToast(`Label "${labelName}" removed`);
         
