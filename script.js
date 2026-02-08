@@ -78,8 +78,8 @@ class NotesApp {
 
     setupGlobalKeybindListener() {
         document.addEventListener('keydown', (e) => {
-            // Don't trigger if user is typing in an input or the editor
-            if (e.target.tagName === 'INPUT' || e.target === this.editor) {
+            // Don't trigger if user is typing in an input field (but allow in editor)
+            if (e.target.tagName === 'INPUT') {
                 return;
             }
             
@@ -93,6 +93,10 @@ class NotesApp {
                 if (this.matchesKeybind(e, binding)) {
                     e.preventDefault();
                     this.switchToLabel(labelName);
+                    // Keep focus on editor
+                    if (this.editor && document.activeElement !== this.editor) {
+                        this.editor.focus();
+                    }
                     return;
                 }
             }
@@ -261,7 +265,17 @@ class NotesApp {
     }
 
     handleEditorKeydown(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        // Check if this is a keybind combination
+        let isKeybind = false;
+        for (const [labelName, binding] of Object.entries(this.keybinds)) {
+            if (this.matchesKeybind(e, binding)) {
+                isKeybind = true;
+                break;
+            }
+        }
+        
+        // Only handle Enter if it's not part of a keybind
+        if (e.key === 'Enter' && !e.shiftKey && !isKeybind) {
             e.preventDefault();
             this.insertLabel();
         }
